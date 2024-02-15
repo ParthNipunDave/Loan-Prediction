@@ -1,0 +1,31 @@
+steps:
+  # Build the docker images:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build','-t','us-central1-docker.pkg.dev/sublime-state-413617/bank-churn-vertex-ai/bank_churn:$COMMIT_SHA','.']
+
+  # Run Test cases
+
+
+  - name: 'us-central1-docker.pkg.dev/sublime-state-413617/bank-churn-vertex-ai/bank_churn:$COMMIT_SHA'
+    entrypoint: python
+    args: ['-m','pytest','.']
+
+  # Push the docker image to artifact
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push','us-central1-docker.pkg.dev/sublime-state-413617/bank-churn-vertex-ai/bank_churn:$COMMIT_SHA']
+
+  # Deploy Cloud Run Service
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'bank-churn-vertex-ai'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/sublime-state-413617/bank-churn-vertex-ai/bank_churn:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+
+options:
+    logging: CLOUD_LOGGING_ONLY
